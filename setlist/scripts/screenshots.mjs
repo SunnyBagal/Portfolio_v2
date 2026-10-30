@@ -55,29 +55,38 @@ for (const vp of viewports) {
   await page.waitForTimeout(1200);
 
   const shot = (name) => page.screenshot({ path: fileURLToPath(new URL(`${vp.name}-${name}.png`, out)) });
+  // Sections are sticky, so offsetTop is where they're stuck; sum heights for the real position.
+  const scrollToSection = (id, extra = 0) =>
+    page.evaluate(
+      ([id, extra]) => {
+        let y = 0;
+        for (const s of document.querySelectorAll('.sec')) {
+          if (s.id === id) break;
+          y += s.offsetHeight;
+        }
+        scrollTo(0, y + extra);
+      },
+      [id, extra],
+    );
 
   for (const id of sections) {
-    await page.evaluate((id) => {
-      document.documentElement.style.scrollBehavior = 'auto';
-      const el = document.getElementById(id);
-      scrollTo(0, el.offsetTop);
-    }, id);
+    await scrollToSection(id);
     await page.waitForTimeout(900);
     await shot(id);
   }
 
   // A few interactions: second track, third record, a tag on the wall.
-  await page.evaluate(() => scrollTo(0, document.getElementById('trajectory').offsetTop + 200));
+  await scrollToSection('trajectory', 200);
   await page.locator('.track').nth(3).click();
   await page.waitForTimeout(700);
   await shot('trajectory-track');
 
-  await page.evaluate(() => scrollTo(0, document.getElementById('education').offsetTop));
+  await scrollToSection('education');
   await page.locator('.vinyl').nth(3).click();
   await page.waitForTimeout(900);
   await shot('education-record');
 
-  await page.evaluate(() => scrollTo(0, document.getElementById('contact').offsetTop));
+  await scrollToSection('contact');
   await page.waitForTimeout(600);
   const box = await page.locator('.wall-canvas canvas').nth(1).boundingBox();
   if (box) {
