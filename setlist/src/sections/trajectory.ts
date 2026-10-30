@@ -2,7 +2,7 @@ import { trajectory, type Track } from '../content';
 import { tonearm } from '../ui/art';
 import { sound } from '../ui/audio';
 import { watchExposure } from '../ui/chrome';
-import { songFor } from '../ui/music';
+import { songFrom } from '../ui/music';
 import { h, heading, icon, rich, svg } from '../ui/dom';
 import { renderLed } from '../ui/led';
 
@@ -94,7 +94,7 @@ export function trajectorySection() {
   // Each track is its own tune; it plays while the deck spins and is on screen.
   function music() {
     const t = trajectory.tracks[current];
-    if (playing && isVisible && t) sound.want('deck', songFor(`track:${t.side}`, t.name));
+    if (playing && isVisible && t) sound.want('deck', songFrom(`track:${t.side}`, t.tune));
     else sound.release('deck');
   }
 

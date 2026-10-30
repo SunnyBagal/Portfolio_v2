@@ -1,9 +1,10 @@
 // Fixed chrome around the sections: nav with active-section underline, the
 // "now playing" pill, back-to-top, the stacked-card scroll effect and reveals.
 
-import { nav, person } from '../content';
+import { nav, person, sectionTunes } from '../content';
 import { sound } from './audio';
 import { h, icon, reducedMotion } from './dom';
+import { songFrom } from './music';
 
 // Elements that care whether they can actually be seen. IntersectionObserver can't tell,
 // because a section buried under the sticky stack still "intersects" the viewport.
@@ -116,6 +117,18 @@ export function wireChrome(sections: HTMLElement[], links: HTMLAnchorElement[], 
   // One overlay per section, faded as the next section slides over it.
   const dims = sections.map((s) => s.appendChild(h('div.dim', { 'aria-hidden': 'true' })));
 
+  // Each section's background tune, picked up after the scroll settles on it.
+  let activeSection = '';
+  let tuneTimer = 0;
+  const sectionTune = (id: string) => {
+    clearTimeout(tuneTimer);
+    tuneTimer = window.setTimeout(() => {
+      const tune = sectionTunes[id];
+      if (tune) sound.want('section', songFrom(`section:${id}`, tune), 0);
+      else sound.release('section');
+    }, 350);
+  };
+
   let active = '';
   let ticking = false;
   const update = () => {
@@ -151,6 +164,11 @@ export function wireChrome(sections: HTMLElement[], links: HTMLAnchorElement[], 
       const value = cover.toFixed(2);
       if (dim.style.opacity !== value) dim.style.opacity = value;
     });
+
+    if (current.id !== activeSection) {
+      activeSection = current.id;
+      sectionTune(activeSection);
+    }
 
     const navId = current.dataset.nav ?? current.id;
     if (navId !== active) {

@@ -19,6 +19,25 @@ export const PLACEHOLDER = (what: string): Placeholder => ({ placeholder: what }
 const link = (href: string, text: string): Link => ({ href, text });
 const b = (strong: string): Strong => ({ strong });
 
+/**
+ * A tune for a section or a disc, played by the generative jazz band in ui/music.ts.
+ * changes: bars separated by "|", one or two chords per bar (two split the bar in half).
+ * Chord qualities: maj7 maj9 maj7#11 69 m7 m9 m11 m6 m7b5 9 13 7b9 7#9 7alt sus.
+ */
+export interface Tune {
+  readonly title: string;
+  readonly bpm: number;
+  readonly feel: 'swing' | 'boombap' | 'bossa' | 'ballad' | 'ambient';
+  readonly lead: 'vibes' | 'horn' | 'flute' | 'keys';
+  readonly changes: string;
+  /** How busy the melody is, 0..1. */
+  readonly density?: number;
+  /** Low-pass cutoff in Hz: lower is dustier. */
+  readonly tone?: number;
+  /** Vinyl crackle, 0..1. */
+  readonly crackle?: number;
+}
+
 export type Hue = 'lime' | 'pink' | 'red' | 'cyan' | 'green' | 'orange' | 'paper' | 'ink' | 'navy';
 
 export const person = {
@@ -30,6 +49,26 @@ export const person = {
   location: 'Navi Mumbai',
   /** Leave as a placeholder until a CV PDF is dropped into public/. */
   cv: PLACEHOLDER('link to your CV PDF'),
+};
+
+/** Each section's background tune, matched to what the section is about. */
+export const sectionTunes: { [id: string]: Tune } = {
+  // Bright, head-nodding welcome: major key, boom-bap pocket, vibes on top.
+  preview: { title: 'Hey Yo (Intro)', bpm: 90, feel: 'boombap', lead: 'vibes', changes: 'Fmaj9 | E7#9 | Am9 | Gm9 C13', density: 0.45, tone: 6000 },
+  // Going one level down: a deep modal minor vamp that slips a half step and back.
+  about: { title: 'The Layer Below', bpm: 78, feel: 'swing', lead: 'keys', changes: 'Dm9 | Dm9 | Ebmaj7#11 | Dm9', density: 0.3, tone: 4200 },
+  // The deck's warm-up when nothing is spinning: a classic turnaround.
+  trajectory: { title: 'Side A Warm-Up', bpm: 84, feel: 'swing', lead: 'vibes', changes: 'Bbmaj9 | Gm9 | Cm9 | F13', density: 0.35 },
+  // Brick wall, street: gritty minor boom-bap with a muted horn.
+  portfolio: { title: 'Brick by Brick', bpm: 86, feel: 'boombap', lead: 'horn', changes: 'Cm9 | Cm9 | Abmaj9 | G7alt', density: 0.35, tone: 3800, crackle: 0.8 },
+  // Playful stickers: bouncy bossa, bright major, flute.
+  skills: { title: 'Stick ’Em Up', bpm: 104, feel: 'bossa', lead: 'flute', changes: 'Gmaj9 | Am9 D13 | Bm7 E7b9 | Am9 D13', density: 0.55, tone: 6500 },
+  // Crate digging: dusty, lowpassed, heavy crackle.
+  education: { title: 'Diggin’ in the Crates', bpm: 78, feel: 'boombap', lead: 'keys', changes: 'Am9 | Am9 | Fmaj9 | E7#9', density: 0.3, tone: 3000, crackle: 1 },
+  // Storytelling: a slow ballad with brushes.
+  stories: { title: 'Liner Notes', bpm: 66, feel: 'ballad', lead: 'vibes', changes: 'Ebmaj9 | Cm9 | Fm9 | Bb13', density: 0.35, tone: 4800 },
+  // Closing the set: warm, open, inviting.
+  contact: { title: 'Next Set', bpm: 80, feel: 'swing', lead: 'horn', changes: 'D69 | Bm9 | Em9 | A13', density: 0.4, tone: 5000 },
 };
 
 export const nav = [
@@ -113,6 +152,7 @@ export interface Track {
   readonly cardTitle: string;
   readonly cardMeta: string;
   readonly bullets: readonly Rich[];
+  readonly tune: Tune;
 }
 
 export const trajectory = {
@@ -127,6 +167,8 @@ export const trajectory = {
       name: 'InteleCorp Software India',
       role: 'Technical Head (internship)',
       when: '4 months',
+      // Leading a team: confident, full-band ii-V-I with a horn out front.
+      tune: { title: 'Technical Head', bpm: 92, feel: 'swing', lead: 'horn', changes: 'Cm9 F13 | Bbmaj9 | Ebmaj9 | Am7b5 D7b9 | Gm9 | C13 | Cm9 | F13', density: 0.45 },
       cardTitle: 'Technical Head',
       cardMeta: 'InteleCorp Software India · Internship · 4 months',
       bullets: [
@@ -140,6 +182,8 @@ export const trajectory = {
       name: 'Linea',
       role: 'Collaborative whiteboard',
       when: 'Live',
+      // A whiteboard people draw on together: light, bright bossa, flute.
+      tune: { title: 'Line by Line', bpm: 100, feel: 'bossa', lead: 'flute', changes: 'Emaj9 | C#m9 | F#m9 | B13', density: 0.5, tone: 6500 },
       cardTitle: 'Linea',
       cardMeta: 'Side project · Live',
       bullets: [
@@ -153,6 +197,8 @@ export const trajectory = {
       name: 'Recall',
       role: 'RAG link organizer',
       when: 'Live',
+      // Memory and retrieval: dreamy, hazy, half-remembered.
+      tune: { title: 'Back of My Mind', bpm: 72, feel: 'ballad', lead: 'keys', changes: 'Dbmaj9 | Cm7 F7#9 | Bbm9 | Ebsus', density: 0.3, tone: 3500, crackle: 0.7 },
       cardTitle: 'Recall',
       cardMeta: 'Side project · Live',
       bullets: [
@@ -166,6 +212,8 @@ export const trajectory = {
       name: 'TraceHound',
       role: 'Repo graph → PR reviewer',
       when: 'Pivoted',
+      // A hound on a trail: minor detective swing, walking bass, muted horn.
+      tune: { title: 'On the Scent', bpm: 88, feel: 'swing', lead: 'horn', changes: 'Gm9 | Gm9 | Ebmaj7#11 | D7alt', density: 0.35, tone: 4200 },
       cardTitle: 'TraceHound',
       cardMeta: 'Side project · Pivoted',
       bullets: [
@@ -179,6 +227,8 @@ export const trajectory = {
       name: 'NeuralCompress',
       role: 'ML image compression research',
       when: 'Research',
+      // Research into latent space: floating lydian, no drums.
+      tune: { title: 'Lossy', bpm: 66, feel: 'ambient', lead: 'flute', changes: 'Fmaj7#11 | Em7 | Dm9 | Ebmaj7#11', density: 0.25, tone: 4000 },
       cardTitle: 'NeuralCompress',
       cardMeta: 'Research',
       bullets: [
@@ -191,6 +241,8 @@ export const trajectory = {
       name: 'The Gmail tracker',
       role: 'Tool built out of a job hunt',
       when: '2–3 weeks',
+      // The job-hunt grind: rainy minor boom-bap that keeps going.
+      tune: { title: 'Inbox Zero', bpm: 82, feel: 'boombap', lead: 'vibes', changes: 'Em9 | Em9 | Cmaj9 | B7#9', density: 0.35, tone: 3600, crackle: 0.8 },
       cardTitle: 'The Gmail tracker',
       cardMeta: 'Side project · Job hunt',
       bullets: [
@@ -211,6 +263,7 @@ export interface Project {
   readonly href: string;
   readonly frame: Hue;
   readonly tilt: number;
+  readonly tune: Tune;
 }
 
 export const portfolio = {
@@ -222,6 +275,8 @@ export const portfolio = {
     {
       id: 'linea',
       kicker: 'Raw ws · Canvas 2D',
+      // Drawing together on a shared canvas: easy bossa in A.
+      tune: { title: 'Shared Canvas', bpm: 96, feel: 'bossa', lead: 'vibes', changes: 'Amaj9 | F#m9 | Bm9 | E13', density: 0.45, tone: 6000 },
       overlay: 'Whiteboard',
       title: 'Linea',
       meta: 'Live · linea.sunnybagal.com',
@@ -232,6 +287,8 @@ export const portfolio = {
     {
       id: 'recall',
       kicker: 'RAG · Hybrid retrieval',
+      // Searching your own memory: slow minor swing on keys.
+      tune: { title: 'Hybrid Search', bpm: 80, feel: 'swing', lead: 'keys', changes: 'Fm9 | Bbm9 | Eb13 | Abmaj9', density: 0.35, tone: 4500 },
       overlay: 'Link Organizer',
       title: 'Recall',
       meta: 'Live · recall.sunnybagal.com',
@@ -242,6 +299,8 @@ export const portfolio = {
     {
       id: 'tracehound',
       kicker: 'Repo graph · Agents',
+      // Reviewing code with a raised eyebrow: tense minor boom-bap, horn.
+      tune: { title: 'Pull Request', bpm: 90, feel: 'boombap', lead: 'horn', changes: 'Dm9 | Bbmaj7#11 | Gm9 | A7alt', density: 0.4, tone: 4200 },
       overlay: 'PR Reviewer',
       title: 'TraceHound',
       meta: 'Pivoted · GitHub',
@@ -305,6 +364,7 @@ export interface CrateRecord {
   readonly hue: Hue;
   readonly ink: Hue;
   readonly pattern: Pattern;
+  readonly tune: Tune;
 }
 
 export const education = {
@@ -318,6 +378,8 @@ export const education = {
     {
       spine: '2026',
       year: '2026',
+      // Graduation: bright, triumphant major turnaround, horn.
+      tune: { title: 'Cap & Gown', bpm: 94, feel: 'swing', lead: 'horn', changes: 'Cmaj9 | A7b9 | Dm9 | G13', density: 0.5, tone: 6000 },
       title: 'B.Tech, Computer Engineering',
       where: 'NMIMS Navi Mumbai',
       body: 'Bachelor of Technology in Computer Engineering. GPA 7.38 / 10 (2.95 / 4.0).',
@@ -328,6 +390,8 @@ export const education = {
     {
       spine: 'LEAD',
       year: 'Internship',
+      // A team moving together: steady major boom-bap.
+      tune: { title: 'Team of Four', bpm: 88, feel: 'boombap', lead: 'keys', changes: 'Bbmaj9 | Gm9 | Ebmaj9 | Fsus', density: 0.4 },
       title: 'Leading four engineers',
       where: 'InteleCorp Software India',
       body: ['Four months as Technical Head, building GeoGrid with a team of four. ', PLACEHOLDER('what leading taught you')],
@@ -338,6 +402,8 @@ export const education = {
     {
       spine: 'WS',
       year: 'Self-taught',
+      // Messages flying both ways: quick up-tempo swing, busy vibes.
+      tune: { title: 'Handshake', bpm: 108, feel: 'swing', lead: 'vibes', changes: 'Gm9 C13 | Fmaj9 | Gm9 C13 | Am7b5 D7b9', density: 0.55, tone: 6000 },
       title: 'Raw WebSockets & Canvas 2D',
       where: 'Linea',
       body: 'Real-time collaboration written against the bare ws library and the Canvas 2D API, with no framework doing the sync or the drawing.',
@@ -348,6 +414,8 @@ export const education = {
     {
       spine: 'RAG',
       year: 'Self-taught',
+      // Searching for the right chunk: thoughtful minor ballad.
+      tune: { title: 'Top-k', bpm: 74, feel: 'ballad', lead: 'keys', changes: 'Bm9 | Gmaj7#11 | Em9 | F#7#9', density: 0.35, tone: 4200 },
       title: 'Retrieval without a framework',
       where: 'Recall',
       body: 'A RAG pipeline with hybrid retrieval, written from scratch without LangChain.',
@@ -358,6 +426,8 @@ export const education = {
     {
       spine: 'AGENT',
       year: 'Self-taught',
+      // An agent in a repair loop: tense, mechanical minor groove.
+      tune: { title: 'Repair Loop', bpm: 92, feel: 'boombap', lead: 'horn', changes: 'C#m9 | Amaj7#11 | F#m9 | G#7alt', density: 0.4, tone: 4000 },
       title: 'Repo graphs & review agents',
       where: 'TraceHound',
       body: 'A repo graph and repair agent, later turned into a PR reviewer scored on a public code-review benchmark.',
@@ -368,6 +438,8 @@ export const education = {
     {
       spine: 'ML',
       year: 'Research',
+      // Latent space: ambient, weightless.
+      tune: { title: 'Latent Space', bpm: 64, feel: 'ambient', lead: 'flute', changes: 'Abmaj7#11 | Gm7 C7#9 | Fm9 | Dbmaj7#11', density: 0.25, tone: 3800 },
       title: 'ML image compression',
       where: 'NeuralCompress',
       body: ['Research into machine-learned image compression. ', PLACEHOLDER('what you studied or found')],
@@ -378,6 +450,8 @@ export const education = {
     {
       spine: 'GEO',
       year: 'Internship',
+      // Maps and coordinates: open, travelling bossa.
+      tune: { title: 'Lat / Long', bpm: 98, feel: 'bossa', lead: 'flute', changes: 'Dmaj9 | Em9 A13 | F#m7 B7b9 | Em9 A13', density: 0.45, tone: 6200 },
       title: 'Geospatial lead generation',
       where: 'GeoGrid',
       body: 'A geospatial lead-generation platform, built during the InteleCorp internship.',
@@ -397,6 +471,7 @@ export interface Single {
   readonly blurb: Rich;
   readonly tags: readonly string[];
   readonly href?: string;
+  readonly tune: Tune;
 }
 
 export const stories = {
@@ -408,6 +483,8 @@ export const stories = {
       cover: 'pink',
       art: 'inbox',
       meta: 'Story · Job hunt',
+      // Refreshing the inbox at 2am: rainy minor boom-bap.
+      tune: { title: 'Applied (Pending)', bpm: 80, feel: 'boombap', lead: 'vibes', changes: 'F#m9 | Dmaj7#11 | Bm9 | C#7#9', density: 0.35, tone: 3600, crackle: 0.9 },
       title: '100+ applications, no tracker. So I built one from my Gmail.',
       blurb: '100–130 applications in 2–3 weeks, about 30 rejections, and no way to tell which was which.',
       tags: ['job-hunt', 'tooling', 'gmail'],
@@ -417,6 +494,8 @@ export const stories = {
       cover: 'lime',
       art: 'hound',
       meta: 'Story · TraceHound',
+      // Bad news, then the decision to keep going: four bars minor, four bars major.
+      tune: { title: 'Day 5', bpm: 86, feel: 'swing', lead: 'horn', changes: 'Am9 | Dm9 | E7alt | Am9 | Fmaj9 | G13 | Cmaj9 | E7b9', density: 0.4 },
       title: 'Day 5: CodeRabbit and Greptile already did it. I finished anyway.',
       blurb: 'Then I pivoted it into a PR reviewer scored on a public code-review benchmark.',
       tags: ['tracehound', 'pivot', 'code-review'],
@@ -426,6 +505,8 @@ export const stories = {
       cover: 'cyan',
       art: 'wave',
       meta: 'Campaign pitch · Wispr Flow India',
+      // A voice note that won't stop: chatty bossa, busy flute.
+      tune: { title: 'Keep Talking', bpm: 102, feel: 'bossa', lead: 'flute', changes: 'Ebmaj9 | Fm9 Bb13 | Gm7 C7b9 | Fm9 Bb13', density: 0.7, tone: 6500 },
       title: 'Keep talking. Send the text.',
       blurb: 'People hate receiving 4-minute voice notes. Flow turns your voice note into the text you should’ve sent.',
       tags: ['campaign', 'wispr-flow', 'india'],

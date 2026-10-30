@@ -1,7 +1,9 @@
 import { person, portfolio } from '../content';
 import { projectArt } from '../ui/art';
+import { sound } from '../ui/audio';
 import { brickTexture } from '../ui/bricks';
 import { h, heading, icon, rich, svg } from '../ui/dom';
+import { songFrom } from '../ui/music';
 
 const FRAME: Record<string, string> = {
   lime: 'var(--lime)',
@@ -12,27 +14,34 @@ const FRAME: Record<string, string> = {
 export function portfolioSection() {
   const wall = h('div.wall');
   for (const p of portfolio.projects) {
-    wall.append(
+    const card = h(
+      'a.shot-card.paper.reveal',
+      { href: p.href, target: '_blank', rel: 'noopener', style: `--tilt:${p.tilt}deg` },
+      h('span.tape.l'),
+      h('span.tape.r'),
       h(
-        'a.shot-card.paper.reveal',
-        { href: p.href, target: '_blank', rel: 'noopener', style: `--tilt:${p.tilt}deg` },
-        h('span.tape.l'),
-        h('span.tape.r'),
+        'div.shot-frame',
+        { style: `--frame:${FRAME[p.frame] ?? 'var(--lime)'}` },
         h(
-          'div.shot-frame',
-          { style: `--frame:${FRAME[p.frame] ?? 'var(--lime)'}` },
-          h(
-            'div.shot-art',
-            {},
-            svg(projectArt[p.id]),
-            h('div.over', {}, h('small', {}, p.kicker), h('b', {}, p.overlay)),
-          ),
-          h('span.btn.small.view-chip', {}, 'View project', icon('arrow')),
+          'div.shot-art',
+          {},
+          svg(projectArt[p.id]),
+          h('div.over', {}, h('small', {}, p.kicker), h('b', {}, p.overlay)),
         ),
-        h('h3.display', {}, p.title),
-        h('p.meta', {}, p.meta),
+        h('span.btn.small.view-chip', {}, 'View project', icon('arrow')),
       ),
+      h('h3.display', {}, p.title),
+      h('p.meta', {}, p.meta),
     );
+    // Hovering or focusing a polaroid plays that project's tune.
+    const source = `project:${p.id}`;
+    const on = () => sound.want(source, songFrom(source, p.tune));
+    const off = () => sound.release(source);
+    card.addEventListener('pointerenter', (e) => e.pointerType === 'mouse' && on());
+    card.addEventListener('pointerleave', (e) => e.pointerType === 'mouse' && off());
+    card.addEventListener('focus', on);
+    card.addEventListener('blur', off);
+    wall.append(card);
   }
 
   const marks = portfolio.marks.map((m, i) => h(`span.wm-${i % 7}` as 'span', {}, m));

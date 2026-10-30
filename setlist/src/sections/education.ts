@@ -2,7 +2,7 @@ import { education } from '../content';
 import { recordFront } from '../ui/art';
 import { sound } from '../ui/audio';
 import { watchExposure } from '../ui/chrome';
-import { songFor } from '../ui/music';
+import { songFrom } from '../ui/music';
 import { h, heading, icon, rich, svg } from '../ui/dom';
 
 const INK: Record<string, string> = { ink: '#141416', paper: '#f3f0ea', red: '#e3232b' };
@@ -47,7 +47,7 @@ export function educationSection() {
   }
   function music() {
     const r = records[current];
-    if (touched && visible && r) sound.want('crate', songFor(`record:${r.spine}`, `${r.where} · ${r.spine}`));
+    if (touched && visible && r) sound.want('crate', songFrom(`record:${r.spine}`, r.tune));
     else sound.release('crate');
   }
   watchExposure(shelf, (exposed) => {

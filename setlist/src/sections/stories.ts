@@ -1,7 +1,7 @@
 import { person, PLACEHOLDER, stories } from '../content';
 import { coverArt } from '../ui/art';
 import { sound } from '../ui/audio';
-import { songFor } from '../ui/music';
+import { songFrom } from '../ui/music';
 import { h, heading, icon, rich, svg } from '../ui/dom';
 
 export function storiesSection() {
@@ -27,7 +27,7 @@ export function storiesSection() {
     );
     // Hovering a single drops the needle on it; tapping toggles it on touch screens.
     const source = `single:${i}`;
-    const song = songFor(source, s.title);
+    const song = songFrom(source, s.tune);
     const on = () => sound.want(source, song);
     const off = () => sound.release(source);
     card.addEventListener('pointerenter', (e) => e.pointerType === 'mouse' && on());
