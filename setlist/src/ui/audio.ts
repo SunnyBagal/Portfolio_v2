@@ -1,37 +1,55 @@
-// All sound is synthesized with Web Audio: a 90 BPM boom-bap loop for the turntable
-// and a filtered-noise hiss for the spray can. Muted until the speaker button is pressed.
+// All sound is synthesized with Web Audio: a generative jazz tune for whichever disc is
+// playing (see music.ts) and a filtered-noise hiss for the spray can.
+//
+// Several discs can want to play at once (the turntable is on screen, a record is pulled,
+// a single is hovered). The most recent request wins; when it lets go, the previous one
+// that still wants to play takes over.
 
-type Listener = (on: boolean) => void;
+import { JazzBand, type Song } from './music';
+
+type Listener<T> = (value: T) => void;
 
 class Sound {
   enabled = false;
+  private userMuted = false;
   private ctx?: AudioContext;
   private master?: GainNode;
   private noise?: AudioBuffer;
-  private beatTimer = 0;
-  private nextBeat = 0;
-  private step = 0;
-  private bpm = 90;
-  private playing = false;
+  private band?: JazzBand;
+  private requests: { source: string; song: Song }[] = [];
   private hiss?: { src: AudioBufferSourceNode; gain: GainNode };
-  private listeners: Listener[] = [];
+  private onToggle: Listener<boolean>[] = [];
+  private onSongChange: Listener<Song | undefined>[] = [];
 
-  onChange(fn: Listener) {
-    this.listeners.push(fn);
+  onChange(fn: Listener<boolean>) {
+    this.onToggle.push(fn);
   }
 
+  onSong(fn: Listener<Song | undefined>) {
+    this.onSongChange.push(fn);
+  }
+
+  /** The speaker button. */
   toggle() {
-    this.enabled = !this.enabled;
-    if (this.enabled) this.ensure();
-    if (this.master && this.ctx) this.master.gain.setTargetAtTime(this.enabled ? 0.8 : 0, this.ctx.currentTime, 0.05);
-    this.syncBeat();
-    for (const fn of this.listeners) fn(this.enabled);
+    this.setEnabled(!this.enabled);
+    this.userMuted = !this.enabled;
   }
 
-  setPlaying(on: boolean, bpm = this.bpm) {
-    this.playing = on;
-    this.bpm = bpm;
-    this.syncBeat();
+  /** A click on a disc turns sound on, unless the visitor muted it on purpose. */
+  wake() {
+    if (!this.enabled && !this.userMuted) this.setEnabled(true);
+  }
+
+  want(source: string, song: Song) {
+    this.requests = this.requests.filter((r) => r.source !== source);
+    this.requests.push({ source, song });
+    this.sync();
+  }
+
+  release(source: string) {
+    const before = this.requests.length;
+    this.requests = this.requests.filter((r) => r.source !== source);
+    if (this.requests.length !== before) this.sync();
   }
 
   /** Spray-can hiss; pressure 0..1. */
@@ -46,7 +64,7 @@ class Sound {
       band.frequency.value = 2400;
       const gain = this.ctx.createGain();
       gain.gain.value = 0;
-      gain.gain.setTargetAtTime(0.08 + pressure * 0.12, this.ctx.currentTime, 0.02);
+      gain.gain.setTargetAtTime(0.06 + pressure * 0.1, this.ctx.currentTime, 0.02);
       src.connect(band).connect(gain).connect(this.master);
       src.start();
       this.hiss = { src, gain };
@@ -58,6 +76,26 @@ class Sound {
     }
   }
 
+  private setEnabled(on: boolean) {
+    this.enabled = on;
+    if (on) this.ensure();
+    if (this.master && this.ctx) this.master.gain.setTargetAtTime(on ? 0.8 : 0, this.ctx.currentTime, 0.08);
+    this.sync();
+    for (const fn of this.onToggle) fn(on);
+  }
+
+  private sync() {
+    const top = this.enabled ? this.requests[this.requests.length - 1]?.song : undefined;
+    if (!this.band) {
+      for (const fn of this.onSongChange) fn(undefined);
+      return;
+    }
+    const before = this.band.playing;
+    if (top) this.band.play(top);
+    else this.band.stop();
+    if (before !== this.band.playing) for (const fn of this.onSongChange) fn(this.band.playing);
+  }
+
   private ensure() {
     if (this.ctx) {
       void this.ctx.resume();
@@ -65,81 +103,17 @@ class Sound {
     }
     this.ctx = new AudioContext();
     this.master = this.ctx.createGain();
-    this.master.gain.value = 0.8;
+    this.master.gain.value = 0;
     this.master.connect(this.ctx.destination);
     const len = this.ctx.sampleRate;
     this.noise = this.ctx.createBuffer(1, len, this.ctx.sampleRate);
     const data = this.noise.getChannelData(0);
     for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
-  }
-
-  private syncBeat() {
-    const want = this.enabled && this.playing;
-    if (want && !this.beatTimer && this.ctx) {
-      this.nextBeat = this.ctx.currentTime + 0.05;
-      this.step = 0;
-      this.beatTimer = window.setInterval(() => this.schedule(), 25);
-    } else if (!want && this.beatTimer) {
-      clearInterval(this.beatTimer);
-      this.beatTimer = 0;
-    }
-  }
-
-  // 16-step pattern: kick, snare, hats, with a little swing.
-  private schedule() {
-    const ctx = this.ctx!;
-    const sixteenth = 60 / this.bpm / 4;
-    while (this.nextBeat < ctx.currentTime + 0.12) {
-      const s = this.step % 16;
-      const t = this.nextBeat + (s % 2 ? sixteenth * 0.12 : 0);
-      if ([0, 7, 10].includes(s)) this.kick(t);
-      if (s === 4 || s === 12) this.snare(t);
-      if (s % 2 === 0) this.hat(t, s % 4 === 0 ? 0.05 : 0.03);
-      this.nextBeat += sixteenth;
-      this.step++;
-    }
-  }
-
-  private kick(t: number) {
-    const ctx = this.ctx!;
-    const osc = ctx.createOscillator();
-    const g = ctx.createGain();
-    osc.frequency.setValueAtTime(130, t);
-    osc.frequency.exponentialRampToValueAtTime(42, t + 0.18);
-    g.gain.setValueAtTime(0.9, t);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.4);
-    osc.connect(g).connect(this.master!);
-    osc.start(t);
-    osc.stop(t + 0.42);
-  }
-
-  private snare(t: number) {
-    const ctx = this.ctx!;
-    const src = ctx.createBufferSource();
-    src.buffer = this.noise!;
-    const bp = ctx.createBiquadFilter();
-    bp.type = 'bandpass';
-    bp.frequency.value = 1800;
-    const g = ctx.createGain();
-    g.gain.setValueAtTime(0.45, t);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.2);
-    src.connect(bp).connect(g).connect(this.master!);
-    src.start(t, Math.random() * 0.5, 0.25);
-  }
-
-  private hat(t: number, level: number) {
-    const ctx = this.ctx!;
-    const src = ctx.createBufferSource();
-    src.buffer = this.noise!;
-    const hp = ctx.createBiquadFilter();
-    hp.type = 'highpass';
-    hp.frequency.value = 7000;
-    const g = ctx.createGain();
-    g.gain.setValueAtTime(level, t);
-    g.gain.exponentialRampToValueAtTime(0.001, t + 0.05);
-    src.connect(hp).connect(g).connect(this.master!);
-    src.start(t, Math.random() * 0.5, 0.06);
+    this.band = new JazzBand(this.ctx, this.master, this.noise);
   }
 }
 
 export const sound = new Sound();
+
+// Dev-only handle for poking at the audio graph from the console or test scripts.
+if (import.meta.env.DEV) (window as unknown as { sound: Sound }).sound = sound;
