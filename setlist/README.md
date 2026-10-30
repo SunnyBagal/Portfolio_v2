@@ -29,7 +29,17 @@ Stack: Vite 8.3.5, TypeScript 5.9.3, Playwright 1.64.1 for screenshots. There's 
 | Artículos | Stories | Album sleeves with the disc sliding out on hover |
 | Contacto | Contact | Graffiti wall: 9 cans, 5 nozzles, size, pressure, drips / anti-drip, undo, clear, PNG export |
 
-Also: sticky stacked sections (each one slides over the last), the "Now playing" pill with scroll progress, active-section nav underline, back-to-top, and a sound toggle (boom-bap loop while the deck plays, spray hiss on the wall).
+Also: sticky stacked sections (each one slides over the last), the "Now playing" pill with scroll progress, active-section nav underline and back-to-top.
+
+## Music
+
+Every disc on the page has its own lo-fi jazz tune: the six turntable tracks, the seven records in the crate and the three singles. The tunes are generated live in [`src/ui/music.ts`](src/ui/music.ts), with Rhodes-style electric piano comping, a walking upright bass, brushed drums with a swung ride, a sparse vibraphone melody and vinyl crackle. Each disc's id picks its key, tempo, chord progression and melody seed, so a disc always plays the same tune. Nothing is sampled or licensed.
+
+- **Turntable:** plays the selected track while it spins and the deck is on screen.
+- **Crate:** a record plays once you pull one, while the crate is on screen.
+- **Singles:** play on hover or focus; tap to toggle on touch screens.
+- **Now playing:** the pill shows the tune's name.
+- **Muting:** sound is off until the speaker button is pressed or a disc is clicked. If you mute on purpose it stays muted.
 
 ## Content
 
