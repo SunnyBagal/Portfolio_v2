@@ -33,10 +33,15 @@ Also: sticky stacked sections (each one slides over the last), the "Now playing"
 
 ## Music
 
-Every disc on the page has its own lo-fi jazz tune: the six turntable tracks, the seven records in the crate and the three singles. The tunes are generated live in [`src/ui/music.ts`](src/ui/music.ts), with Rhodes-style electric piano comping, a walking upright bass, brushed drums with a swung ride, a sparse vibraphone melody and vinyl crackle. Each disc's id picks its key, tempo, chord progression and melody seed, so a disc always plays the same tune. Nothing is sampled or licensed.
+Every section and every disc has its own lo-fi jazz tune, 27 in all: 8 section backgrounds, 6 turntable tracks, 3 project polaroids, 7 crate records and 3 singles. Each tune is written in [`src/content.ts`](src/content.ts), next to the card it belongs to, as chord changes plus a tempo, a groove (swing, boom-bap, bossa, ballad or ambient) and a lead (vibes, muted horn, flute or keys). Each one is picked to match its subject: a minor detective swing for TraceHound, a floating ambient piece for the ML research, a rainy boom-bap for the job hunt, a chatty bossa for "Keep talking".
 
+The band in [`src/ui/music.ts`](src/ui/music.ts) plays them live: Rhodes-style electric piano, upright bass, drums per groove, a lead that states a motif, varies it, answers it and rests, and vinyl crackle. Nothing is sampled or licensed.
+
+- **Sections:** each section's tune fades in once you settle on it.
 - **Turntable:** plays the selected track while it spins and the deck is on screen.
+- **Project polaroids:** play on hover or focus.
 - **Crate:** a record plays once you pull one, while the crate is on screen.
+- **Priority:** a disc plays over its section's tune and hands back to it when you let go.
 - **Singles:** play on hover or focus; tap to toggle on touch screens.
 - **Now playing:** the pill shows the tune's name.
 - **Muting:** sound is off until the speaker button is pressed or a disc is clicked. If you mute on purpose it stays muted.
@@ -45,7 +50,6 @@ Every disc on the page has its own lo-fi jazz tune: the six turntable tracks, th
 
 All copy is in [`src/content.ts`](src/content.ts). Anything wrapped in `PLACEHOLDER()` renders with a dashed underline. These are still open:
 
-- A photo: drop it at `public/sunny.jpg` and it replaces the drawn placeholder in the hero polaroid.
 - CV PDF link.
 - Lessons for the InteleCorp internship and the application sprint; the NeuralCompress result.
 - Links for the three stories. Until a story has an `href`, its card isn't clickable.
