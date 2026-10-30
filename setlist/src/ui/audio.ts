@@ -1,9 +1,9 @@
 // All sound is synthesized with Web Audio: a generative jazz tune for whichever disc is
 // playing (see music.ts) and a filtered-noise hiss for the spray can.
 //
-// Several discs can want to play at once (the turntable is on screen, a record is pulled,
-// a single is hovered). The most recent request wins; when it lets go, the previous one
-// that still wants to play takes over.
+// Several things can want to play at once: the section you're in has a background tune,
+// and discs (the turntable, a pulled record, a hovered card) play over it. Higher priority
+// wins, then the most recent request; when it lets go, the next one takes over.
 
 import { JazzBand, type Song } from './music';
 
@@ -16,7 +16,7 @@ class Sound {
   private master?: GainNode;
   private noise?: AudioBuffer;
   private band?: JazzBand;
-  private requests: { source: string; song: Song }[] = [];
+  private requests: { source: string; song: Song; priority: number }[] = [];
   private hiss?: { src: AudioBufferSourceNode; gain: GainNode };
   private onToggle: Listener<boolean>[] = [];
   private onSongChange: Listener<Song | undefined>[] = [];
@@ -40,9 +40,12 @@ class Sound {
     if (!this.enabled && !this.userMuted) this.setEnabled(true);
   }
 
-  want(source: string, song: Song) {
+  /** priority 0 is a section's background tune; discs use 1. */
+  want(source: string, song: Song, priority = 1) {
+    const existing = this.requests.find((r) => r.source === source);
+    if (existing?.song === song && existing.priority === priority) return;
     this.requests = this.requests.filter((r) => r.source !== source);
-    this.requests.push({ source, song });
+    this.requests.push({ source, song, priority });
     this.sync();
   }
 
@@ -85,7 +88,17 @@ class Sound {
   }
 
   private sync() {
-    const top = this.enabled ? this.requests[this.requests.length - 1]?.song : undefined;
+    let top: Song | undefined;
+    if (this.enabled) {
+      let best = -1;
+      // Later requests win ties, so iterate in order and keep >=.
+      for (const r of this.requests) {
+        if (r.priority >= best) {
+          best = r.priority;
+          top = r.song;
+        }
+      }
+    }
     if (!this.band) {
       for (const fn of this.onSongChange) fn(undefined);
       return;
