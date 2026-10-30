@@ -1,5 +1,8 @@
 import { education } from '../content';
 import { recordFront } from '../ui/art';
+import { sound } from '../ui/audio';
+import { watchExposure } from '../ui/chrome';
+import { songFor } from '../ui/music';
 import { h, heading, icon, rich, svg } from '../ui/dom';
 
 const INK: Record<string, string> = { ink: '#141416', paper: '#f3f0ea', red: '#e3232b' };
@@ -22,7 +25,7 @@ export function educationSection() {
       h('span.front', {}, svg(recordFront(ink)), h('small', {}, r.where)),
       h('span.spine', {}, r.spine),
     );
-    el.addEventListener('click', () => select(i));
+    el.addEventListener('click', () => pick(i));
     shelf.append(el);
     return el;
   });
@@ -30,8 +33,27 @@ export function educationSection() {
   const card = h('article.crate-card.paper', { 'aria-live': 'polite' });
   const prev = h('button', { type: 'button' }, icon('arrowLeft'), 'Previous');
   const next = h('button', { type: 'button' }, 'Next', icon('arrow'));
-  prev.addEventListener('click', () => select(current - 1));
-  next.addEventListener('click', () => select(current + 1));
+  prev.addEventListener('click', () => pick(current - 1));
+  next.addEventListener('click', () => pick(current + 1));
+
+  // A record only starts playing once someone pulls one; then it plays while the crate is in view.
+  let touched = false;
+  let visible = false;
+  function pick(i: number) {
+    touched = true;
+    sound.wake();
+    select(i);
+    music();
+  }
+  function music() {
+    const r = records[current];
+    if (touched && visible && r) sound.want('crate', songFor(`record:${r.spine}`, `${r.where} · ${r.spine}`));
+    else sound.release('crate');
+  }
+  watchExposure(shelf, (exposed) => {
+    visible = exposed;
+    music();
+  });
 
   function select(i: number) {
     if (i < 0 || i >= records.length || i === current) return;

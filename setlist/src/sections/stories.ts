@@ -1,10 +1,12 @@
 import { person, PLACEHOLDER, stories } from '../content';
 import { coverArt } from '../ui/art';
+import { sound } from '../ui/audio';
+import { songFor } from '../ui/music';
 import { h, heading, icon, rich, svg } from '../ui/dom';
 
 export function storiesSection() {
   const grid = h('div.singles');
-  for (const s of stories.singles) {
+  stories.singles.forEach((s, i) => {
     // Without a published link the card is not clickable and says so.
     const tag = s.href ? 'a' : 'div';
     const card = h(
@@ -23,8 +25,24 @@ export function storiesSection() {
       h('div.tags', {}, ...s.tags.map((t) => h('span', {}, t))),
       s.href ? '' : rich('p', [PLACEHOLDER('link to where this story is published')]),
     );
+    // Hovering a single drops the needle on it; tapping toggles it on touch screens.
+    const source = `single:${i}`;
+    const song = songFor(source, s.title);
+    const on = () => sound.want(source, song);
+    const off = () => sound.release(source);
+    card.addEventListener('pointerenter', (e) => e.pointerType === 'mouse' && on());
+    card.addEventListener('pointerleave', (e) => e.pointerType === 'mouse' && off());
+    card.addEventListener('focus', on);
+    card.addEventListener('blur', off);
+    let tapped = false;
+    card.addEventListener('click', () => {
+      sound.wake();
+      tapped = !tapped || matchMedia('(hover: hover)').matches;
+      if (tapped) on();
+      else off();
+    });
     grid.append(card);
-  }
+  });
 
   return h(
     'section.sec.stories',
