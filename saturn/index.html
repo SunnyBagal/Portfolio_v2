@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <title>Sunny Bagal · Saturn</title>
+    <meta name="description" content="Sunny Bagal: backend engineer who goes one level down." />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap"
+    />
+  </head>
+  <body>
+    <!-- Canvas and story-rock labels. First in the DOM so Tab reaches the rocks first. -->
+    <div id="stage"></div>
+
+    <header class="hud-top">
+      <h1 class="brand">Sunny Bagal <span>/ Saturn</span></h1>
+      <p class="hint">Drag to orbit. Click a glowing rock. <kbd>Tab</kbd> + <kbd>Enter</kbd> to browse.</p>
+      <nav id="legend" class="legend" aria-label="Rings"></nav>
+    </header>
+
+    <div id="ring-chip" class="ring-chip" hidden></div>
+    <div id="tooltip" class="tooltip" role="tooltip" hidden></div>
+
+    <aside id="panel" class="panel" aria-hidden="true" aria-labelledby="panel-title">
+      <div class="panel-head">
+        <button type="button" class="back">← Back <kbd>Esc</kbd></button>
+        <button type="button" class="raw-toggle" aria-pressed="false">Raw dictation</button>
+      </div>
+      <p class="panel-kind"></p>
+      <h2 id="panel-title" class="panel-title" tabindex="-1"></h2>
+      <ul class="facts" aria-label="Facts"></ul>
+      <div class="panel-body"></div>
+    </aside>
+
+    <section class="cmd-wrap" aria-label="Voice and typed navigation">
+      <form id="cmd" class="cmd" autocomplete="off">
+        <button type="button" class="mic" aria-label="Speak a command" aria-pressed="false">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <rect x="9" y="3" width="6" height="11" rx="3" />
+            <path d="M5 11a7 7 0 0 0 14 0M12 18v3" />
+          </svg>
+        </button>
+        <input type="text" aria-label="Type a command" placeholder="Try “show me what you built”" />
+        <button type="submit" class="go">Go</button>
+      </form>
+      <div class="cmd-meta">
+        <p id="heard" class="heard" aria-live="polite"></p>
+        <p class="note">Voice works in Chrome. Typing works everywhere.</p>
+      </div>
+    </section>
+
+    <footer id="foot" class="foot"></footer>
+
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>
